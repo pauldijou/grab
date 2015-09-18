@@ -1,0 +1,10 @@
+{
+  "name": "seek",
+  "version": "0.1.0",
+  "main": "lib/node.js",
+  "browser": "lib/browser.js",
+  "dependencies": {
+    "xmlhttprequest": "^1.7.0",
+    "form-data": "1.0.0-rc3"
+  }
+}
