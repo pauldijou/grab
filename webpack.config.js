@@ -2,15 +2,12 @@ var path = require('path');
 var webpack = require('webpack');
 
 module.exports = {
-  entry: {
-    'node': './src/node',
-    'browser': './src/browser'
-  },
+  entry: './src/browser',
 
   output: {
     path: path.join(__dirname, 'dist'),
-    filename: '[name].js',
-    library: '[name]',
+    filename: 'seek.js',
+    library: 'seek',
     libraryTarget: 'umd'
   },
 

@@ -1,5 +1,11 @@
 // Constants and utils
 const CONTENT_TYPE = 'Content-Type';
+const errors = {
+  network: 'NETWORK',
+  abort: 'ABORT',
+  cancel: 'CANCEL',
+  timeout: 'TIMEOUT'
+};
 
 function noop() {}
 
@@ -17,7 +23,7 @@ function hasQuery(url) {
 }
 
 function fail(message) {
-  throw new Error('Seek: ' + message);
+  throw new TypeError('Seek: ' + message);
 }
 
 function extractHeaders(xhr) {
@@ -29,54 +35,116 @@ function extractHeaders(xhr) {
   }, {});
 }
 
-// The real deal
-export default function seekFactory(Promise, XMLHttpRequest, FormData, undef) {
-  function parseFormData(body) {
-    const form = new FormData();
-    body.trim().split('&').forEach(function (bytes) {
-      if (bytes) {
-        const split = bytes.split('=');
-        const name = split.shift().replace(/\+/g, ' ');
-        const value = split.join('=').replace(/\+/g, ' ');
-        form.append(decodeURIComponent(name), decodeURIComponent(value))
-      }
-    });
-    return form;
+// Errors
+export class NetworkError extends Error {
+  constructor () {
+    super();
+    this.name = 'NetworkError';
+    this.code = errors.timeout;
+    this.message = 'Network request failed';
+  }
+}
+
+export class AbortError extends Error {
+  constructor () {
+    super();
+    this.name = 'AbortError';
+    this.code = errors.abort;
+    this.message = 'Request was aborted for an unknow reason';
+  }
+}
+
+export class CancelError extends AbortError {
+  constructor () {
+    super();
+    this.name = 'CancelError';
+    this.code = errors.cancel;
+    this.message = 'Request canceled by user';
+  }
+}
+
+export class TimeoutError extends AbortError {
+  constructor (duration) {
+    super();
+    this.name = 'CancelError';
+    this.code = errors.timeout;
+    this.message = `Request timeout after ${duration}ms`;
+  }
+}
+
+function parseFormData(body, FormData) {
+  if (!FormData) {
+    fail('FormData is not supported');
   }
 
-  class Response {
-    constructor (xhr, status) {
-      this.type = 'default';
-      this.status = status;
-      this.statusText = xhr.statusText;
-      this.ok = this.status >= 200 && this.status < 300;
-      this.headers = extractHeaders(xhr);
-      this.body = 'response' in xhr ? xhr.response : xhr.responseText;
-    },
-
-    text () {
-      return this.body;
-    },
-
-    json () {
-      if (!this.bodyJSON) {
-        this.bodyJSON = JSON.parse(this.text());
-      }
-
-      return this.bodyJSON;
-    },
-
-    formData () {
-      if (!this.bodyFormData) {
-        this.bodyFormData = parseFormData(this.text())
-      }
-
-      return this.bodyFormData;
+  const form = new FormData();
+  body.trim().split('&').forEach(function (params) {
+    if (params) {
+      const keyValue = params.split('=');
+      const key = keyValue.shift().replace(/\+/g, ' ');
+      const value = keyValue.join('=').replace(/\+/g, ' ');
+      form.append(decodeURIComponent(key), decodeURIComponent(value))
     }
+  });
+  return form;
+}
+
+export class Response {
+  constructor (xhr, status, FormData) {
+    this.type = 'default';
+    this.status = status;
+    this.statusText = xhr.statusText;
+    this.ok = this.status >= 200 && this.status < 300;
+    this.headers = extractHeaders(xhr);
+    this.body = 'response' in xhr ? xhr.response : xhr.responseText;
+    this.FormData = FormData;
+  }
+
+  text () {
+    return this.body;
+  }
+
+  json () {
+    if (!this.bodyJSON) {
+      this.bodyJSON = JSON.parse(this.text());
+    }
+
+    return this.bodyJSON;
+  }
+
+  formData () {
+    if (!this.bodyFormData) {
+      this.bodyFormData = parseFormData(this.text(), this.FormData)
+    }
+
+    return this.bodyFormData;
+  }
+}
+
+// The real deal
+export default function seekFactory(XMLHttpRequest, FormData, undef) {
+  const defaults = {
+    log: noop,
+    timeout: 0,
+    headers: {},
+    cache: typeof window === 'undefined' ? false : !!(window.ActiveXObject || 'ActiveXObject' in window), // By default, only enabled on old IE (also the presence of ActiveXObject is a nice correlation with the cache bug)
+    method: 'GET',
+    base: '',
+    credentials: false
+  };
+
+  function assignDefaults(options) {
+    Object.keys(defaults).forEach(key=> {
+      if (options[key] === undef) {
+        options[key] = defaults[key];
+      }
+    });
   }
 
   // The main logic of the lib: sending a XMLHttpRequest
   function send(options) {
+    assignDefaults(options);
+
     const request = new Promise((resolve, reject)=> {
       const xhr = new XMLHttpRequest();
 
@@ -86,9 +154,9 @@ export default function seekFactory(Promise, XMLHttpRequest, FormData, undef) {
           seek.defaults.log({ok: true, message: `Seek: ${options.method} ${options.url} => ${status}`});
 
           if (status < 100 || status > 599) {
-            reject(new Error('Network request failed'));
+            reject(new NetworkError());
           } else {
-            resolve(new Response(xhr, status));
+            resolve(new Response(xhr, status, FormData));
           }
         } catch (e) {
           reject(e); // IE could throw an error
@@ -97,12 +165,18 @@ export default function seekFactory(Promise, XMLHttpRequest, FormData, undef) {
 
       xhr.onerror = function () {
         seek.defaults.log({ok: false, message: `Seek: ${options.method} ${options.url} => XHR error`});
-        reject(new Error('Network request failed'));
+        reject(new NetworkError());
       };
 
       xhr.onabort = function () {
-        seek.defaults.log({ok: false, message: `Seek: ${options.method} ${options.url} => XHR aborted`});
-        reject(new Error('Request aborted (timeout or cancel)'));
+        seek.defaults.log({ok: false, message: `Seek: ${options.method} ${options.url} => XHR ${(canceled && 'canceled') || (timedout && 'timeout') || 'aborted'}`});
+        if (canceled) {
+          reject(new CancelError());
+        } else if (timedout) {
+          reject(new TimeoutError(options.timeout));
+        } else {
+          reject(new AbortError());
+        }
       };
 
       if (options.notify || options.onProgress) {
@@ -122,7 +196,7 @@ export default function seekFactory(Promise, XMLHttpRequest, FormData, undef) {
         options.params[cacheParam === true ? '_' : cacheParam] = (new Date()).getTime();
       }
 
-      const url = (options.base || seek.defaults.base)
+      const url = (options.base || '')
         + options.url
         + (hasQuery(options.url) ? '&' : '?')
         + serializeQuery(params);
@@ -131,8 +205,8 @@ export default function seekFactory(Promise, XMLHttpRequest, FormData, undef) {
       xhr.open(options.method, url, true);
 
       // Init headers
-      if (options.responseType || seek.defaults.responseType) {
-        xhr.responseType = options.responseType || seek.defaults.responseType;
+      if (options.responseType) {
+        xhr.responseType = options.responseType;
       }
 
       if (options.headers === undef) {
@@ -148,7 +222,7 @@ export default function seekFactory(Promise, XMLHttpRequest, FormData, undef) {
       // Credentials
       if (options.credentials === false) {
         // Take priority over anything else => no credentials
-      } else if (options.credentials || seek.defaults.credentials) {
+      } else if (options.credentials) {
         xhr.withCredentials = true;
       }
 
@@ -156,7 +230,7 @@ export default function seekFactory(Promise, XMLHttpRequest, FormData, undef) {
       if (
         options.body !== null &&
         typeof options.body === 'object' &&
-        !(options.body instanceof FormData)
+        (!FormData || !(options.body instanceof FormData))
       ) {
         if (!(CONTENT_TYPE in options.headers)) {
           options.headers[CONTENT_TYPE] = 'application/json';
@@ -177,16 +251,19 @@ export default function seekFactory(Promise, XMLHttpRequest, FormData, undef) {
       }
     });
 
-    // Timeout
+    // Timeout and abort
+    let canceled = false;
+    let timedout = false;
     let timeout;
-    const duration = options.timeout || seek.defaults.timeout;
-    if (duration) {
+    if (options.timeout) {
       timeout = setTimeout(()=> {
+        timedout = true;
         xhr.abort();
-      }, duration);
+      }, options.timeout);
     }
 
-    function abort () {
+    function cancelRequest() {
+      canceled = true;
       if (typeof timeout === 'number') {
         clearTimeout(timeout);
       }
@@ -196,21 +273,22 @@ export default function seekFactory(Promise, XMLHttpRequest, FormData, undef) {
     // User cancellation
     if (options.cancel && options.cancel.then) {
       options.cancel.then((value)=> {
-        abort();
+        cancelRequest();
         return value;
       });
     }
 
     // Expose cancel method
     request.cancel = function cancel() {
-      abort();
+      cancelRequest();
     };
 
     return request;
   }
 
   function seek(input, options = {}) {
-    if (input === undef) fail('come on... there is no way do make a request without any arguments...');
+    if (input === undef) {
+      fail('come on... there is no way do make a request without any arguments...');
     }
 
     if (typeof input === 'string') {
@@ -222,19 +300,19 @@ export default function seekFactory(Promise, XMLHttpRequest, FormData, undef) {
       fail('Seek: first argument "input" must be a string or an object');
     }
 
-    if (!options.url) fail('you need to provide an url, either with a string "input" or an "url" key inside the "options" object.');
+    if (!options.url) {
+      fail('you need to provide an url, either with a string "input" or an "url" key inside the "options" object.');
+    }
 
     return send(options);
   }
 
-  seek.defaults = {
-    log: noop,
-    timeout: 0,
-    headers: {},
-    cache: typeof window === 'undefined' ? false : !!(window.ActiveXObject || 'ActiveXObject' in window), // By default, only enabled on old IE (also the presence of ActiveXObject is a nice correlation with the cache bug)
-    method: 'GET',
-    base: '',
-    credentials: false
+  seek.defaults = defaults;
+
+  seek.erros = errors;
+
+  seek.filterSuccess = function (response) {
+    return response.ok ? Promise.resolve(response) : Promise.reject(response);
   };
 
   seek.filterStatus = function filterStatus(status) {
@@ -250,20 +328,12 @@ export default function seekFactory(Promise, XMLHttpRequest, FormData, undef) {
     }
 
     return function (response) {
-      return check(response.status) ? Promise.resolve(xhr) : Promise.reject(xhr);
+      return check(response.status) ? Promise.resolve(response) : Promise.reject(response);
     };
   };
 
-  seek.filterSuccess = seek.filterStatus(s => s >= 200 && s < 300 || s === 304);
-
   seek.toJSON = function toJSON(response) {
-    return new Promise((resolve, reject)=> {
-      try {
-        resolve(JSON.parse(response.body));
-      } catch (e) {
-        reject(e);
-      }
-    });
+    return response.json();
   }
 
   seek.getJSON = function getJSON(input, options) {
