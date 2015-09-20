@@ -22,7 +22,8 @@
     "clean": "rimraf lib",
     "build": "babel src --out-dir lib",
     "dist": "rimraf dist && webpack --config webpack.config.js --colors",
-    "prepublish": "npm run clean && npm run build"
+    "prepublish": "npm run clean && npm run build",
+    "start": "npm run dist && node ./example/server.js"
   },
   "dependencies": {
     "xmlhttprequest": "^1.7.0",
@@ -32,6 +33,9 @@
     "webpack": "^1.12.0",
     "babel": "^5.8.21",
     "babel-loader": "^5.3.0",
-    "rimraf": "^2.4.3"
+    "rimraf": "^2.4.3",
+    "express": "^4.13.3",
+    "body-parser": "^1.14.0",
+    "jasmine": "^2.3.0"
   }
 }

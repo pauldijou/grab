@@ -28,7 +28,7 @@ function fail(message) {
 
 function extractHeaders(xhr) {
   const tuples = xhr.getAllResponseHeaders().trim().split('\n');
-  tuples.reduces((headers, tuple)=> {
+  tuples.reduce((headers, tuple)=> {
     const keyValue = tuple.split(':');
     headers[keyValue.shift().trim()] = keyValue.join(':').trim();
     return headers;
@@ -36,7 +36,7 @@ function extractHeaders(xhr) {
 }
 
 // Errors
-export class NetworkError extends Error {
+class NetworkError extends Error {
   constructor () {
     super();
     this.name = 'NetworkError';
@@ -45,7 +45,7 @@ export class NetworkError extends Error {
   }
 }
 
-export class AbortError extends Error {
+class AbortError extends Error {
   constructor () {
     super();
     this.name = 'AbortError';
@@ -54,7 +54,7 @@ export class AbortError extends Error {
   }
 }
 
-export class CancelError extends AbortError {
+class CancelError extends AbortError {
   constructor () {
     super();
     this.name = 'CancelError';
@@ -63,7 +63,7 @@ export class CancelError extends AbortError {
   }
 }
 
-export class TimeoutError extends AbortError {
+class TimeoutError extends AbortError {
   constructor (duration) {
     super();
     this.name = 'CancelError';
@@ -89,7 +89,7 @@ function parseFormData(body, FormData) {
   return form;
 }
 
-export class Response {
+class Response {
   constructor (xhr, status, FormData) {
     this.type = 'default';
     this.status = status;
@@ -196,10 +196,13 @@ export default function seekFactory(XMLHttpRequest, FormData, undef) {
         options.params[cacheParam === true ? '_' : cacheParam] = (new Date()).getTime();
       }
 
+      const serializedParams = serializeQuery(options.params);
+
       const url = (options.base || '')
         + options.url
-        + (hasQuery(options.url) ? '&' : '?')
-        + serializeQuery(params);
+        + (serializedParams ?
+          (hasQuery(options.url) ? '&' : '?') + serializedParams :
+          '');
 
       // Open the XHR
       xhr.open(options.method, url, true);
@@ -341,6 +344,15 @@ export default function seekFactory(XMLHttpRequest, FormData, undef) {
   }
 
   seek.serialize = serializeQuery;
+
+  seek.Response = Response;
+
+  seek.NetworkError = NetworkError;
+  seek.AbortError = AbortError;
+  seek.TimeoutError = TimeoutError;
+  seek.CancelError = CancelError;
+
+  seek.errors = errors;
 
   return seek;
 };
