@@ -23,7 +23,8 @@
     "build": "babel src --out-dir lib",
     "dist": "rimraf dist && webpack --config webpack.config.js --colors",
     "prepublish": "npm run clean && npm run build",
-    "start": "npm run dist && node ./example/server.js"
+    "start": "npm run dist && node ./example/server.js",
+    "test": "karma start"
   },
   "dependencies": {
     "xmlhttprequest": "^1.7.0",
@@ -36,6 +37,14 @@
     "rimraf": "^2.4.3",
     "express": "^4.13.3",
     "body-parser": "^1.14.0",
-    "jasmine": "^2.3.0"
+    "cors": "^2.7.1",
+    "jasmine": "^2.3.0",
+    "karma": "^0.13.0",
+    "karma-jasmine": "^0.3.6",
+    "karma-chrome-launcher": "^0.2.0",
+    "karma-phantomjs-launcher": "^0.2.0",
+    "karma-webpack": "^1.7.0",
+    "phantomjs": "1.9.17",
+    "node-libs-browser": ">= 0.4.0 <=0.6.0"
   }
 }

@@ -13,7 +13,7 @@ npm install seek-js --save
 The Promise API. You can use any polyfill you want, just be sure it's present inside the window / global object. Browser support is now [pretty good](https://www.npmjs.com/package/) (except IE).
 
 **Dependencies**
-- browser: none
+- browser: none (only 400 LOC)
 - node: [xmlhttprequest](https://www.npmjs.com/package/xmlhttprequest) and [form-data](https://www.npmjs.com/package/form-data)
 
 **Features**
@@ -55,7 +55,7 @@ seek({method: 'POST', url: '/api/users', body: { name: 'Paul' }})
 
 - **input**: either a string matching a valid url or an object used as the options parameter.
 - **options**: object containing the request configuration
-  - url (required if no input): a string containing the direct URL of the resource you want to seek.
+  - url (required if no  string input): a string containing the direct URL of the resource you want to seek.
   - method (default: 'GET'): the request method, e.g., GET, POST.
   - body (any): the body of the request. If JavaScript object, will be stringified and `Content-Type: application/json` header will be added
   - headers (object): a map of key/value for all the request headers
@@ -63,6 +63,7 @@ seek({method: 'POST', url: '/api/users', body: { name: 'Paul' }})
   - cancel (Promise): when this promise is resolved, it will stop the request, rejecting it with a CancelError.
   - credentials (boolean): flag for `xhr.withCredentials`
   - responseType (string): assigned to `xhr.responseType`
+  - onProgress (function): a function called by the XMLHttpRequest with a [progress event](https://developer.mozilla.org/en-US/docs/Web/Events/progress).
 
 #### Returns
 
@@ -106,6 +107,18 @@ seek.defaults.headers['X-Custom-Header'] = 'CustomValue';
 ```
 
 Any parameter inside **options** when calling `seek` will override the defaults. For example, you can put a timeout for all your requests by default but disable it for a particular long request by setting `timeout: 0` inside the options.
+
+### Shortcuts
+
+There is a shortcut for every HTTP methods, the syntax is `seek.[METHOD](url, [body], options)`.
+
+```javascript
+seek.get('/users');
+seek.post('/users', { id: 1, name: 'Paul', admin: true });
+seek.put('/users/1', { name: 'Alex', admin: false });
+seek.patch('/users/1', { admin: true })
+seek.delete('/users/1');
+```
 
 ### Utils
 
@@ -201,6 +214,10 @@ seek('/api/users', { timeout: 10 })
     }
   });
 ```
+
+## Tests
+
+First start the dev server using `npm start` and then run the tests with `npm test`.
 
 ## Thanks
 

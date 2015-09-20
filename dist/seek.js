@@ -119,9 +119,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function extractHeaders(xhr) {
 	  var tuples = xhr.getAllResponseHeaders().trim().split('\n');
-	  tuples.reduce(function (headers, tuple) {
+	  return tuples.reduce(function (headers, tuple) {
 	    var keyValue = tuple.split(':');
-	    headers[keyValue.shift().trim()] = keyValue.join(':').trim();
+	    if (keyValue[0]) {
+	      headers[keyValue.shift().trim()] = keyValue.join(':').trim();
+	    }
 	    return headers;
 	  }, {});
 	}
@@ -136,7 +138,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    _get(Object.getPrototypeOf(NetworkError.prototype), 'constructor', this).call(this);
 	    this.name = 'NetworkError';
-	    this.code = errors.timeout;
+	    this.code = errors.network;
 	    this.message = 'Network request failed';
 	  }
 
@@ -249,15 +251,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	})();
 
 	function seekFactory(XMLHttpRequest, FormData, undef) {
-	  var defaults = {
-	    log: noop,
-	    timeout: 0,
-	    headers: {},
-	    cache: typeof window === 'undefined' ? false : !!(window.ActiveXObject || 'ActiveXObject' in window), // By default, only enabled on old IE (also the presence of ActiveXObject is a nice correlation with the cache bug)
-	    method: 'GET',
-	    base: '',
-	    credentials: false
-	  };
+	  var defaults = {};
+
+	  function resetDefaults() {
+	    defaults.log = noop;
+	    defaults.timeout = 0;
+	    defaults.headers = {};
+	    defaults.cache = typeof window === 'undefined' ? false : !!(window.ActiveXObject || 'ActiveXObject' in window); // By default; only enabled on old IE (also the presence of ActiveXObject is a nice correlation with the cache bug)
+	    defaults.method = 'GET';
+	    defaults.base = '';
+	    defaults.credentials = false;
+	  }
 
 	  function assignDefaults(options) {
 	    Object.keys(defaults).forEach(function (key) {
@@ -270,10 +274,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  // The main logic of the lib: sending a XMLHttpRequest
 	  function send(options) {
 	    assignDefaults(options);
+	    var xhr = new XMLHttpRequest();
 
 	    var request = new Promise(function (resolve, reject) {
-	      var xhr = new XMLHttpRequest();
-
 	      xhr.onload = function () {
 	        try {
 	          var _status = xhr.status === 1223 ? 204 : xhr.status;
@@ -305,9 +308,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	      };
 
-	      if (options.notify || options.onProgress) {
+	      if (options.onProgress) {
 	        xhr.onprogress = function (progress) {
-	          (options.notify || options.onProgress)(progress);
+	          options.onProgress(progress);
 	        };
 	      }
 
@@ -338,12 +341,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        options.headers = {};
 	      }
 
-	      Object.keys(seek.defaults.headers).forEach(function (header) {
-	        if (options.headers[header] === undef) {
-	          options.headers[header] = seek.defaults.headers[header];
-	        }
-	      });
-
 	      // Credentials
 	      if (options.credentials === false) {
 	        // Take priority over anything else => no credentials
@@ -355,11 +352,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	      if (options.body !== null && typeof options.body === 'object' && (!FormData || !(options.body instanceof FormData))) {
 	        if (!(CONTENT_TYPE in options.headers)) {
 	          options.headers[CONTENT_TYPE] = 'application/json';
-	          options.body = JSON.stringify(options.body);
 	        }
+	        options.body = JSON.stringify(options.body);
 	      }
 
 	      // Set headers
+	      Object.keys(seek.defaults.headers).forEach(function (header) {
+	        xhr.setRequestHeader(header, seek.defaults.headers[header]);
+	      });
+
 	      Object.keys(options.headers).forEach(function (header) {
 	        xhr.setRequestHeader(header, options.headers[header]);
 	      });
@@ -420,20 +421,86 @@ return /******/ (function(modules) { // webpackBootstrap
 	    } else if (typeof input === 'object') {
 	      options = input;
 	    } else {
-	      fail('Seek: first argument "input" must be a string or an object');
+	      fail('Seek: first argument "input" must be a string or an object but got ' + typeof input);
 	    }
 
 	    if (!options.url) {
 	      fail('you need to provide an url, either with a string "input" or an "url" key inside the "options" object.');
 	    }
 
+	    if (options.onProgress && typeof options.onProgress !== 'function') {
+	      fail('onProgress must be a function');
+	    }
+
 	    return send(options);
 	  }
 
+	  // Expose defaults
 	  seek.defaults = defaults;
 
-	  seek.erros = errors;
+	  // Shortcuts
+	  function assignShortcut(method, url, body, options) {
+	    if (!options) {
+	      options = {};
+	    }
 
+	    options.url = url;
+	    options.method = method;
+
+	    if (body !== undef) {
+	      options.body = body;
+	    }
+
+	    return options;
+	  }
+
+	  seek.get = function get(url, options) {
+	    options = assignShortcut('GET', url, undef, options);
+	    return seek(options);
+	  };
+
+	  // Not a typo, 'delete' is a reserved word
+	  seek['delete'] = function delet(url, options) {
+	    options = assignShortcut('DELETE', url, undef, options);
+	    return seek(options);
+	  };
+
+	  seek.options = function options(url, options) {
+	    options = assignShortcut('OPTIONS', url, undef, options);
+	    return seek(options);
+	  };
+
+	  seek.head = function head(url, options) {
+	    options = assignShortcut('HEAD', url, undef, options);
+	    return seek(options);
+	  };
+
+	  seek.trace = function trace(url, options) {
+	    options = assignShortcut('TRACE', url, undef, options);
+	    return seek(options);
+	  };
+
+	  seek.connect = function connect(url, options) {
+	    options = assignShortcut('CONNECT', url, undef, options);
+	    return seek(options);
+	  };
+
+	  seek.post = function post(url, body, options) {
+	    options = assignShortcut('POST', url, body, options);
+	    return seek(options);
+	  };
+
+	  seek.put = function put(url, body, options) {
+	    options = assignShortcut('PUT', url, body, options);
+	    return seek(options);
+	  };
+
+	  seek.patch = function patch(url, body, options) {
+	    options = assignShortcut('PATCH', url, body, options);
+	    return seek(options);
+	  };
+
+	  // Util methods
 	  seek.filterSuccess = function (response) {
 	    return response.ok ? Promise.resolve(response) : Promise.reject(response);
 	  };
@@ -467,6 +534,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  seek.serialize = serializeQuery;
 
+	  // Types
 	  seek.Response = Response;
 
 	  seek.NetworkError = NetworkError;
@@ -475,6 +543,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	  seek.CancelError = CancelError;
 
 	  seek.errors = errors;
+
+	  seek.resetDefaults = resetDefaults;
+
+	  resetDefaults();
 
 	  return seek;
 	}

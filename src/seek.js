@@ -28,9 +28,11 @@ function fail(message) {
 
 function extractHeaders(xhr) {
   const tuples = xhr.getAllResponseHeaders().trim().split('\n');
-  tuples.reduce((headers, tuple)=> {
+  return tuples.reduce((headers, tuple)=> {
     const keyValue = tuple.split(':');
-    headers[keyValue.shift().trim()] = keyValue.join(':').trim();
+    if (keyValue[0]) {
+      headers[keyValue.shift().trim()] = keyValue.join(':').trim();
+    }
     return headers;
   }, {});
 }
@@ -40,7 +42,7 @@ class NetworkError extends Error {
   constructor () {
     super();
     this.name = 'NetworkError';
-    this.code = errors.timeout;
+    this.code = errors.network;
     this.message = 'Network request failed';
   }
 }
@@ -123,15 +125,17 @@ class Response {
 
 // The real deal
 export default function seekFactory(XMLHttpRequest, FormData, undef) {
-  const defaults = {
-    log: noop,
-    timeout: 0,
-    headers: {},
-    cache: typeof window === 'undefined' ? false : !!(window.ActiveXObject || 'ActiveXObject' in window), // By default, only enabled on old IE (also the presence of ActiveXObject is a nice correlation with the cache bug)
-    method: 'GET',
-    base: '',
-    credentials: false
-  };
+  const defaults = {};
+
+  function resetDefaults() {
+    defaults.log = noop;
+    defaults.timeout = 0;
+    defaults.headers = {};
+    defaults.cache = typeof window === 'undefined' ? false : !!(window.ActiveXObject || 'ActiveXObject' in window); // By default; only enabled on old IE (also the presence of ActiveXObject is a nice correlation with the cache bug)
+    defaults.method = 'GET';
+    defaults.base = '';
+    defaults.credentials = false;
+  }
 
   function assignDefaults(options) {
     Object.keys(defaults).forEach(key=> {
@@ -144,10 +148,9 @@ export default function seekFactory(XMLHttpRequest, FormData, undef) {
   // The main logic of the lib: sending a XMLHttpRequest
   function send(options) {
     assignDefaults(options);
+    const xhr = new XMLHttpRequest();
 
     const request = new Promise((resolve, reject)=> {
-      const xhr = new XMLHttpRequest();
-
       xhr.onload = function () {
         try {
           const status = (xhr.status === 1223) ? 204 : xhr.status;
@@ -179,9 +182,9 @@ export default function seekFactory(XMLHttpRequest, FormData, undef) {
         }
       };
 
-      if (options.notify || options.onProgress) {
+      if (options.onProgress) {
         xhr.onprogress = function (progress) {
-          (options.notify || options.onProgress)(progress);
+          options.onProgress(progress);
         };
       }
 
@@ -216,12 +219,6 @@ export default function seekFactory(XMLHttpRequest, FormData, undef) {
         options.headers = {};
       }
 
-      Object.keys(seek.defaults.headers).forEach(header=> {
-        if (options.headers[header] === undef) {
-          options.headers[header] = seek.defaults.headers[header];
-        }
-      });
-
       // Credentials
       if (options.credentials === false) {
         // Take priority over anything else => no credentials
@@ -237,11 +234,15 @@ export default function seekFactory(XMLHttpRequest, FormData, undef) {
       ) {
         if (!(CONTENT_TYPE in options.headers)) {
           options.headers[CONTENT_TYPE] = 'application/json';
-          options.body = JSON.stringify(options.body);
         }
+        options.body = JSON.stringify(options.body);
       }
 
       // Set headers
+      Object.keys(seek.defaults.headers).forEach(header=> {
+        xhr.setRequestHeader(header, seek.defaults.headers[header]);
+      });
+
       Object.keys(options.headers).forEach(header=> {
         xhr.setRequestHeader(header, options.headers[header]);
       });
@@ -300,20 +301,86 @@ export default function seekFactory(XMLHttpRequest, FormData, undef) {
     } else if (typeof input === 'object') {
       options = input;
     } else {
-      fail('Seek: first argument "input" must be a string or an object');
+      fail('Seek: first argument "input" must be a string or an object but got ' + (typeof input));
     }
 
     if (!options.url) {
       fail('you need to provide an url, either with a string "input" or an "url" key inside the "options" object.');
     }
 
+    if (options.onProgress && typeof options.onProgress !== 'function') {
+      fail('onProgress must be a function');
+    }
+
     return send(options);
   }
 
+  // Expose defaults
   seek.defaults = defaults;
 
-  seek.erros = errors;
+  // Shortcuts
+  function assignShortcut(method, url, body, options) {
+    if (!options) {
+      options = {};
+    }
 
+    options.url = url;
+    options.method = method;
+
+    if (body !== undef) {
+      options.body = body;
+    }
+
+    return options;
+  }
+
+  seek.get = function get(url, options) {
+    options = assignShortcut('GET', url, undef, options);
+    return seek(options);
+  };
+
+  // Not a typo, 'delete' is a reserved word
+  seek['delete'] = function delet(url, options) {
+    options = assignShortcut('DELETE', url, undef, options);
+    return seek(options);
+  };
+
+  seek.options = function options(url, options) {
+    options = assignShortcut('OPTIONS', url, undef, options);
+    return seek(options);
+  };
+
+  seek.head = function head(url, options) {
+    options = assignShortcut('HEAD', url, undef, options);
+    return seek(options);
+  };
+
+  seek.trace = function trace(url, options) {
+    options = assignShortcut('TRACE', url, undef, options);
+    return seek(options);
+  };
+
+  seek.connect = function connect(url, options) {
+    options = assignShortcut('CONNECT', url, undef, options);
+    return seek(options);
+  };
+
+  seek.post = function post(url, body, options) {
+    options = assignShortcut('POST', url, body, options);
+    return seek(options);
+  };
+
+  seek.put = function put(url, body, options) {
+    options = assignShortcut('PUT', url, body, options);
+    return seek(options);
+  };
+
+  seek.patch = function patch(url, body, options) {
+    options = assignShortcut('PATCH', url, body, options);
+    return seek(options);
+  };
+
+  // Util methods
   seek.filterSuccess = function (response) {
     return response.ok ? Promise.resolve(response) : Promise.reject(response);
   };
@@ -345,6 +412,7 @@ export default function seekFactory(XMLHttpRequest, FormData, undef) {
 
   seek.serialize = serializeQuery;
 
+  // Types
   seek.Response = Response;
 
   seek.NetworkError = NetworkError;
@@ -353,6 +421,10 @@ export default function seekFactory(XMLHttpRequest, FormData, undef) {
   seek.CancelError = CancelError;
 
   seek.errors = errors;
+
+  seek.resetDefaults = resetDefaults;
+
+  resetDefaults();
 
   return seek;
 };
