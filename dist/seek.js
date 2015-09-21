@@ -432,11 +432,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	      fail('onProgress must be a function');
 	    }
 
+	    if (options.timeout !== undef && (typeof options.timeout !== 'number' || options.timeout < 0)) {
+	      fail('timeout must be a positive number');
+	    }
+
+	    if (options.cancel !== undef && typeof options.cancel.then !== 'function') {
+	      fail('cancel must be a Promise with, at least, a "then" method');
+	    }
+
 	    return send(options);
 	  }
-
-	  // Expose defaults
-	  seek.defaults = defaults;
 
 	  // Shortcuts
 	  function assignShortcut(method, url, body, options) {
@@ -501,37 +506,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  };
 
 	  // Util methods
-	  seek.filterSuccess = function (response) {
-	    return response.ok ? Promise.resolve(response) : Promise.reject(response);
-	  };
-
-	  seek.filterStatus = function filterStatus(status) {
-	    var typ = typeof status;
-	    var check = undefined;
-
-	    if (typ === 'function') {
-	      check = status;
-	    } else if (typ === 'number') {
-	      check = function (s) {
-	        return s === status;
-	      };
-	    } else {
-	      fail('status must be a number or a function but found ' + typ);
-	    }
-
-	    return function (response) {
-	      return check(response.status) ? Promise.resolve(response) : Promise.reject(response);
-	    };
-	  };
-
-	  seek.toJSON = function toJSON(response) {
-	    return response.json();
-	  };
-
-	  seek.getJSON = function getJSON(input, options) {
-	    return seek(input, options).then(seek.filterSuccess).then(seek.toJSON);
-	  };
-
 	  seek.serialize = serializeQuery;
 
 	  // Types
@@ -543,6 +517,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  seek.CancelError = CancelError;
 
 	  seek.errors = errors;
+
+	  // Expose defaults
+	  seek.defaults = defaults;
 
 	  seek.resetDefaults = resetDefaults;
 

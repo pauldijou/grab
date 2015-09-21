@@ -9,13 +9,16 @@ const errors = {
 
 function noop() {}
 
-function serializeQuery(params) {
-  return Object.keys(params).reduce((query, param)=> {
-    if (params.hasOwnProperty(param) && params[param] !== undef) {
-      query.push(encodeURIComponent(param) + "=" + encodeURIComponent(params[param]));
+function copy(value) {
+  if (value !== null && typeof value === 'object') {
+    const result = {};
+    for (let key in value) {
+      result[key] = copy(value[key]);
     }
-    return query;
-  }, []).join('&');
+    return result;
+  } else {
+    return value;
+  }
 }
 
 function hasQuery(url) {
@@ -140,9 +143,18 @@ export default function seekFactory(XMLHttpRequest, FormData, undef) {
   function assignDefaults(options) {
     Object.keys(defaults).forEach(key=> {
       if (options[key] === undef) {
-        options[key] = defaults[key];
+        options[key] = copy(defaults[key]);
       }
     });
+  }
+
+  function serializeQuery(params) {
+    return Object.keys(params).reduce((query, param)=> {
+      if (params.hasOwnProperty(param) && params[param] !== undef) {
+        query.push(encodeURIComponent(param) + "=" + encodeURIComponent(params[param]));
+      }
+      return query;
+    }, []).join('&');
   }
 
   // The main logic of the lib: sending a XMLHttpRequest
@@ -210,11 +222,11 @@ export default function seekFactory(XMLHttpRequest, FormData, undef) {
       // Open the XHR
       xhr.open(options.method, url, true);
 
-      // Init headers
       if (options.responseType) {
         xhr.responseType = options.responseType;
       }
 
+      // Init headers
       if (options.headers === undef) {
         options.headers = {};
       }
@@ -232,17 +244,20 @@ export default function seekFactory(XMLHttpRequest, FormData, undef) {
         typeof options.body === 'object' &&
         (!FormData || !(options.body instanceof FormData))
       ) {
-        if (!(CONTENT_TYPE in options.headers)) {
-          options.headers[CONTENT_TYPE] = 'application/json';
+        if (options.urlEncoded) {
+          if (!(CONTENT_TYPE in options.headers)) {
+            options.headers[CONTENT_TYPE] = 'application/x-www-form-urlencoded';
+          }
+          options.body = serializeQuery(options.body);
+        } else {
+          if (!(CONTENT_TYPE in options.headers)) {
+            options.headers[CONTENT_TYPE] = 'application/json';
+          }
+          options.body = JSON.stringify(options.body);
         }
-        options.body = JSON.stringify(options.body);
       }
 
       // Set headers
-      Object.keys(seek.defaults.headers).forEach(header=> {
-        xhr.setRequestHeader(header, seek.defaults.headers[header]);
-      });
-
       Object.keys(options.headers).forEach(header=> {
         xhr.setRequestHeader(header, options.headers[header]);
       });
@@ -310,6 +325,14 @@ export default function seekFactory(XMLHttpRequest, FormData, undef) {
 
     if (options.onProgress && typeof options.onProgress !== 'function') {
       fail('onProgress must be a function');
+    }
+
+    if (options.timeout !== undef && (typeof options.timeout !== 'number' || options.timeout < 0)) {
+      fail('timeout must be a positive number');
+    }
+
+    if (options.cancel !== undef && typeof options.cancel.then !== 'function') {
+      fail('cancel must be a Promise with, at least, a "then" method');
     }
 
     return send(options);

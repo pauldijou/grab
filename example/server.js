@@ -9,9 +9,6 @@ app.use(cors());
 
 app.options('*', cors());
 
-// app.use(bodyParser.json()); // for parsing application/json
-// app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
-
 var parseJSON = bodyParser.json();
 var parseUrlencoded = bodyParser.urlencoded({ extended: true });
 
@@ -19,10 +16,8 @@ app.use(function(req, res, next){
   if ((req.header('Content-Type') || req.header('content-type')) === 'application/json') {
     parseJSON(req, res, next);
   } else if ((req.header('Content-Type') || req.header('content-type')) === 'application/x-www-form-urlencoded') {
-    console.log('PARSE FORM DATA');
     parseUrlencoded(req, res, next);
-  } else if ((req.header('Content-Type') || req.header('content-type')) === 'multipart/form-data') {
-    console.log('PARSE MULTIPART DATA');
+  } else if ((req.header('Content-Type') || req.header('content-type') || '').indexOf('multipart/form-data') >= 0) {
     multer.array()(req, res, next);
   } else {
     req.body = '';

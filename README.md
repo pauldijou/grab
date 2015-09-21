@@ -17,7 +17,7 @@ The Promise API. You can use any polyfill you want, just be sure it's present in
 - node: [xmlhttprequest](https://www.npmjs.com/package/xmlhttprequest) and [form-data](https://www.npmjs.com/package/form-data)
 
 **Features**
-- support old browsers (up to IE8)
+- support old browsers
 - onProgress listener
 - timeout
 - cancel
@@ -28,15 +28,14 @@ The Promise API. You can use any polyfill you want, just be sure it's present in
 import seek from 'seek-js';
 
 // GET /api/users?limit=10
-seek('/api/users', { params: { limit: 10 }}).then(response=> {
+seek('/api/users', { params: { limit: 10 }}).then(response => {
   console.log(response.json());
-}).catch(error=> {
+}).catch(error => {
   console.error(error);
 });
 
 // POST /api/users
 seek({method: 'POST', url: '/api/users', body: { name: 'Paul' }})
-  .then(seek.filterSuccess) // Helper to separate OK HTTP status and the other ones
   .then(response => console.log('User created'))
   .catch(error => console.error(error));
 ```
@@ -55,16 +54,17 @@ seek({method: 'POST', url: '/api/users', body: { name: 'Paul' }})
 
 - **input**: either a string matching a valid url or an object used as the options parameter.
 - **options**: object containing the request configuration
-  - url (required if no  string input): a string containing the direct URL of the resource you want to seek.
-  - method (default: 'GET'): the request method, e.g., GET, POST.
-  - body (any): the body of the request. If JavaScript object, will be stringified and `Content-Type: application/json` header will be added
-  - params (object): a map of key/value which will be added to the query string
-  - headers (object): a map of key/value for all the request headers
-  - timeout (number): the number of milliseconds before stopping the request, rejecting it with a TimeoutError.
-  - cancel (Promise): when this promise is resolved, it will stop the request, rejecting it with a CancelError.
-  - credentials (boolean): flag for `xhr.withCredentials`
-  - responseType (string): assigned to `xhr.responseType`
-  - onProgress (function): a function called by the XMLHttpRequest with a [progress event](https://developer.mozilla.org/en-US/docs/Web/Events/progress).
+  - **url** (required if no  string input): a string containing the direct URL of the resource you want to seek.
+  - **method** (default: 'GET'): the request method, e.g., GET, POST.
+  - **body** (any): the body of the request. If JavaScript object, will be stringified and `Content-Type: application/json` header will be added
+  - **params** (object): a map of key/value which will be added to the query string
+  - **headers** (object): a map of key/value for all the request headers
+  - **timeout** (number): the number of milliseconds before stopping the request, rejecting it with a TimeoutError.
+  - **cancel** (Promise): when this promise is resolved, it will stop the request, rejecting it with a CancelError.
+  - **credentials** (boolean): flag for `xhr.withCredentials`
+  - **responseType** (string): assigned to `xhr.responseType`
+  - **onProgress** (function): a function called by the XMLHttpRequest with a [progress event](https://developer.mozilla.org/en-US/docs/Web/Events/progress).
+  - **urlEncoded** (boolean): if true, body objects will be serialized as form url encoded and `Content-Type: application/x-www-form-urlencoded` will be added.
 
 #### Returns
 
@@ -107,11 +107,11 @@ seek.defaults.timeout = 60000;
 seek.defaults.headers['X-Custom-Header'] = 'CustomValue';
 ```
 
-Any parameter inside **options** when calling `seek` will override the defaults. For example, you can put a timeout for all your requests by default but disable it for a particular long request by setting `timeout: 0` inside the options.
+Any parameter inside **options** when calling `seek` will override the defaults. For example, you can put a timeout for all your requests by default but disable it for a particular long request by setting `timeout: 0` inside the options. Objects will also be overridden and not merged. Feel free to add any other default you need, they will be copied inside the options if possible. For example, you can do `seek.defaults.urlEncoded = true;` to make all your requests form url encoded by default.
 
 ### Shortcuts
 
-There is a shortcut for every HTTP methods, the syntax is `seek.[METHOD](url, [body], options)`.
+There is a shortcut for every HTTP methods, the syntax is `seek.[METHOD](url, [body], options)`. `POST`, `PUT` and `PATCH` supports a body parameter, all others don't.
 
 ```javascript
 seek.get('/users');
@@ -120,6 +120,33 @@ seek.put('/users/1', { name: 'Alex', admin: false });
 seek.patch('/users/1', { admin: true })
 seek.delete('/users/1');
 ```
+
+### Methods
+
+#### seek.serialize
+
+**Parameters**
+
+A JavaScript object of key / value parameters.
+
+**Returns**
+
+A valid url query string.
+
+```javascript
+seek.serialize({page: 2, limit: 20});
+// returns 'page=2&limit=20'
+```
+
+#### seek.resetDefaults
+
+**Parameters**
+
+None
+
+**Returns**
+
+Reset all defaults to their initial value and return it.
 
 ### Logging
 

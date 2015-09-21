@@ -18,20 +18,24 @@ describe('body >', ()=> {
     });
   });
 
-  fit('should send FormData', done=> {
+  it('should post form url encoded data', (done)=> {
+    seek('/body', { method: 'POST', body: {test: '1', and: 'more'}, urlEncoded: true }).then((response)=> {
+      expect(response.json()).toEqual({test: '1', and: 'more'});
+      done();
+    });
+  });
+
+  it('should send FormData as multipart/form-data', done=> {
     const body = new FormData();
     body.append('name', 'Paul');
 
-    console.log(body);
-    console.log(JSON.stringify(body));
-
-    seek('/users', { method: 'POST', body, headers: { 'Content-Type': 'multipart/form-data' } }).then(response=> {
-      console.log(response);
-      console.log(response.body);
+    seek('/users', { method: 'POST', body }).then(response=> {
+      const user = response.json();
+      expect(response.ok).toBe(true);
+      expect(response.status).toBe(201);
+      expect(user.name).toEqual('Paul');
+      expect(typeof user.id).toEqual('number');
       done();
-    }, error=> {
-      console.log(error);
-      done();
-    })
-  })
+    });
+  });
 });
