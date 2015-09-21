@@ -27,8 +27,8 @@ The Promise API. You can use any polyfill you want, just be sure it's present in
 ```javascript
 import seek from 'seek-js';
 
-// GET /api/users/1
-seek('/api/users/1').then(response=> {
+// GET /api/users?limit=10
+seek('/api/users', { params: { limit: 10 }}).then(response=> {
   console.log(response.json());
 }).catch(error=> {
   console.error(error);
@@ -58,6 +58,7 @@ seek({method: 'POST', url: '/api/users', body: { name: 'Paul' }})
   - url (required if no  string input): a string containing the direct URL of the resource you want to seek.
   - method (default: 'GET'): the request method, e.g., GET, POST.
   - body (any): the body of the request. If JavaScript object, will be stringified and `Content-Type: application/json` header will be added
+  - params (object): a map of key/value which will be added to the query string
   - headers (object): a map of key/value for all the request headers
   - timeout (number): the number of milliseconds before stopping the request, rejecting it with a TimeoutError.
   - cancel (Promise): when this promise is resolved, it will stop the request, rejecting it with a CancelError.
@@ -120,55 +121,6 @@ seek.patch('/users/1', { admin: true })
 seek.delete('/users/1');
 ```
 
-### Utils
-
-#### seek.filterSuccess
-
-Use it when chaining your promises to reject all non-ok responses.
-
-```javascript
-seek('/api/users')
-  .then(seek.filterSuccess)
-  .then(response=> {
-    console.log(response.ok === true); // true
-  }, response=> {
-    console.log(response.ok === false); // true
-  });
-```
-
-#### seek.filterStatus(status)
-
-Reject all responses not matching a particular status (if number) or returning `false` to a predicate (if function).
-
-```javascript
-// Only keep 3xx status
-const filter300 = seek.filterStatus(status=> status >= 300 && status < 400);
-seek('/api/users').then(seek.filter300);
-
-// Only keep 404 status
-seek('/api/users').then(seek.filterStatus(404));
-```
-
-#### seek.toJSON
-
-Extract the body of the response as JSON. Reject if parsing fail.
-
-```javascript
-seek('/api/users').then(seek.toJSON);
-```
-
-### seek.getJSON(input, options)
-
-An alias to perform a request, then filter successful responses and finally parse the body as JSON.
-
-```javascript
-// Doing...
-seek.getJSON('/api/users')
-
-// is equivalent to
-seek('/api/users').then(seek.filterSuccess).then(seek.toJSON);
-```
-
 ### Logging
 
 You can enable logs by providing a `seek.defaults.log` function. It takes only one parameter which has the following attributes:
@@ -208,6 +160,26 @@ seek('/api/users', { timeout: 10 })
     if (error instanceof TimeoutError) {
       console.warn('Couldn\'t make it in time...');
     } else if (error instanceof CancelError) {
+      console.warn('Who canceled the request?!');
+    } else {
+      console.error(error);
+    }
+  });
+```
+
+You can also use error codes from `seek.errors`, you have `network`, `timeout`, `cancel` and `abort`.
+
+```javascript
+import seek from 'seek-js';
+
+seek('/api/users', { timeout: 10 })
+  .then(response=> {
+    console.log('All users', response.json());
+  })
+  .catch(error=> {
+    if (error.code === seek.errors.timeout) {
+      console.warn('Couldn\'t make it in time...');
+    } else if (error.code === seek.errors.cancel) {
       console.warn('Who canceled the request?!');
     } else {
       console.error(error);

@@ -315,9 +315,6 @@ export default function seekFactory(XMLHttpRequest, FormData, undef) {
     return send(options);
   }
 
-  // Expose defaults
-  seek.defaults = defaults;
-
   // Shortcuts
   function assignShortcut(method, url, body, options) {
     if (!options) {
@@ -381,35 +378,6 @@ export default function seekFactory(XMLHttpRequest, FormData, undef) {
   };
 
   // Util methods
-  seek.filterSuccess = function (response) {
-    return response.ok ? Promise.resolve(response) : Promise.reject(response);
-  };
-
-  seek.filterStatus = function filterStatus(status) {
-    const typ = typeof status;
-    let check;
-
-    if (typ === 'function') {
-      check = status;
-    } else if (typ === 'number') {
-      check = s => s === status;
-    } else {
-      fail(`status must be a number or a function but found ${typ}`);
-    }
-
-    return function (response) {
-      return check(response.status) ? Promise.resolve(response) : Promise.reject(response);
-    };
-  };
-
-  seek.toJSON = function toJSON(response) {
-    return response.json();
-  }
-
-  seek.getJSON = function getJSON(input, options) {
-    return seek(input, options).then(seek.filterSuccess).then(seek.toJSON);
-  }
-
   seek.serialize = serializeQuery;
 
   // Types
@@ -421,6 +389,9 @@ export default function seekFactory(XMLHttpRequest, FormData, undef) {
   seek.CancelError = CancelError;
 
   seek.errors = errors;
+
+  // Expose defaults
+  seek.defaults = defaults;
 
   seek.resetDefaults = resetDefaults;
 

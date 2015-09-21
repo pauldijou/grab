@@ -17,4 +17,21 @@ describe('body >', ()=> {
       done();
     });
   });
+
+  fit('should send FormData', done=> {
+    const body = new FormData();
+    body.append('name', 'Paul');
+
+    console.log(body);
+    console.log(JSON.stringify(body));
+
+    seek('/users', { method: 'POST', body, headers: { 'Content-Type': 'multipart/form-data' } }).then(response=> {
+      console.log(response);
+      console.log(response.body);
+      done();
+    }, error=> {
+      console.log(error);
+      done();
+    })
+  })
 });

@@ -37,6 +37,7 @@
     "rimraf": "^2.4.3",
     "express": "^4.13.3",
     "body-parser": "^1.14.0",
+    "multer": "^1.0.5",
     "cors": "^2.7.1",
     "jasmine": "^2.3.0",
     "karma": "^0.13.0",

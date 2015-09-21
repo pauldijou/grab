@@ -1,6 +1,7 @@
 var path = require('path');
 var express = require('express');
 var bodyParser = require('body-parser');
+var multer = require('multer')();
 var cors = require('cors');
 var app = express();
 
@@ -18,7 +19,11 @@ app.use(function(req, res, next){
   if ((req.header('Content-Type') || req.header('content-type')) === 'application/json') {
     parseJSON(req, res, next);
   } else if ((req.header('Content-Type') || req.header('content-type')) === 'application/x-www-form-urlencoded') {
+    console.log('PARSE FORM DATA');
     parseUrlencoded(req, res, next);
+  } else if ((req.header('Content-Type') || req.header('content-type')) === 'multipart/form-data') {
+    console.log('PARSE MULTIPART DATA');
+    multer.array()(req, res, next);
   } else {
     req.body = '';
     req.setEncoding('utf8');
@@ -104,7 +109,7 @@ app.post('/users', function (req, res) {
     users.push(req.body);
     res.status(201).json(req.body);
   } else {
-    res.status(403).end();
+    res.status(400).end();
   }
 });
 
@@ -119,7 +124,7 @@ app.get('/users/:id', function (req, res) {
       res.status(404).end();
     }
   } catch (e) {
-    res.status(403).send('Invalid ID');
+    res.status(400).send('Invalid ID');
   }
 })
 

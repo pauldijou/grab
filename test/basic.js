@@ -36,5 +36,5 @@ describe('GET', ()=> {
       expect(response.body).toEqual(JSON.stringify(headers));
       done();
     });
-  })
+  });
 });
