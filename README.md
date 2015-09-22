@@ -25,7 +25,7 @@ The Promise API. You can use any polyfill you want, just be sure it's present in
 ## Usage
 
 ```javascript
-import grab from 'grab-js';
+import grab from 'grab-http';
 
 // GET /api/users?limit=10
 grab('/api/users', { params: { limit: 10 }}).then(response => {
@@ -176,8 +176,8 @@ Depending on your parameters or the network response, the following errors can b
 - **AbortError**: the XMLHttpRequest has been aborted but we don't really know why. Both `TimeoutError` and `CancelError` extend this error.
 
 ```javascript
-import grab from 'grab-js';
-import { TimeoutError, CancelError } from 'grab-js';
+import grab from 'grab-http';
+import { TimeoutError, CancelError } from 'grab-http';
 
 grab('/api/users', { timeout: 10 })
   .then(response=> {
@@ -197,7 +197,7 @@ grab('/api/users', { timeout: 10 })
 You can also use error codes from `grab.errors`, you have `network`, `timeout`, `cancel` and `abort`.
 
 ```javascript
-import grab from 'grab-js';
+import grab from 'grab-http';
 
 grab('/api/users', { timeout: 10 })
   .then(response=> {
