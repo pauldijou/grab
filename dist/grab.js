@@ -56,9 +56,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 
-	Object.defineProperty(exports, '__esModule', {
-	  value: true
-	});
+	exports.__esModule = true;
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
@@ -66,7 +64,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _grab2 = _interopRequireDefault(_grab);
 
-	exports['default'] = (0, _grab2['default'])(window.XMLHttpRequest, window.FormData);
+	exports['default'] = _grab2['default'](window.XMLHttpRequest, window.FormData);
 	module.exports = exports['default'];
 
 /***/ },
@@ -76,14 +74,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	// Constants and utils
 	'use strict';
 
-	Object.defineProperty(exports, '__esModule', {
-	  value: true
-	});
-
-	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-	var _get = function get(_x2, _x3, _x4) { var _again = true; _function: while (_again) { var object = _x2, property = _x3, receiver = _x4; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x2 = parent; _x3 = property; _x4 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
-
+	exports.__esModule = true;
 	exports['default'] = grabFactory;
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
@@ -139,7 +130,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  function NetworkError() {
 	    _classCallCheck(this, NetworkError);
 
-	    _get(Object.getPrototypeOf(NetworkError.prototype), 'constructor', this).call(this);
+	    _Error.call(this);
 	    this.name = 'NetworkError';
 	    this.code = errors.network;
 	    this.message = 'Network request failed';
@@ -154,7 +145,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  function AbortError() {
 	    _classCallCheck(this, AbortError);
 
-	    _get(Object.getPrototypeOf(AbortError.prototype), 'constructor', this).call(this);
+	    _Error2.call(this);
 	    this.name = 'AbortError';
 	    this.code = errors.abort;
 	    this.message = 'Request was aborted for an unknow reason';
@@ -169,7 +160,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  function CancelError() {
 	    _classCallCheck(this, CancelError);
 
-	    _get(Object.getPrototypeOf(CancelError.prototype), 'constructor', this).call(this);
+	    _AbortError.call(this);
 	    this.name = 'CancelError';
 	    this.code = errors.cancel;
 	    this.message = 'Request canceled by user';
@@ -184,7 +175,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  function TimeoutError(duration) {
 	    _classCallCheck(this, TimeoutError);
 
-	    _get(Object.getPrototypeOf(TimeoutError.prototype), 'constructor', this).call(this);
+	    _AbortError2.call(this);
 	    this.name = 'CancelError';
 	    this.code = errors.timeout;
 	    this.message = 'Request timeout after ' + duration + 'ms';
@@ -225,30 +216,25 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  // The real deal
 
-	  _createClass(Response, [{
-	    key: 'text',
-	    value: function text() {
-	      return this.body;
-	    }
-	  }, {
-	    key: 'json',
-	    value: function json() {
-	      if (!this.bodyJSON) {
-	        this.bodyJSON = JSON.parse(this.text());
-	      }
+	  Response.prototype.text = function text() {
+	    return this.body;
+	  };
 
-	      return this.bodyJSON;
+	  Response.prototype.json = function json() {
+	    if (!this.bodyJSON) {
+	      this.bodyJSON = JSON.parse(this.text());
 	    }
-	  }, {
-	    key: 'formData',
-	    value: function formData() {
-	      if (!this.bodyFormData) {
-	        this.bodyFormData = parseFormData(this.text(), this.FormData);
-	      }
 
-	      return this.bodyFormData;
+	    return this.bodyJSON;
+	  };
+
+	  Response.prototype.formData = function formData() {
+	    if (!this.bodyFormData) {
+	      this.bodyFormData = parseFormData(this.text(), this.FormData);
 	    }
-	  }]);
+
+	    return this.bodyFormData;
+	  };
 
 	  return Response;
 	})();
