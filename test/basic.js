@@ -8,7 +8,6 @@ function testOK(response) {
   expect(response.status).toBe(200);
   expect(response instanceof grab.Response).toBe(true);
   expect(response.body).toEqual('');
-  expect(response.headers).toEqual({});
 }
 
 describe('GET', ()=> {
