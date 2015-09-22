@@ -1,4 +1,12 @@
 // Karma configuration
+var browsers = ['Chrome', 'Firefox'];
+
+if (process.platform === 'darwin') {
+  browsers.push('Safari');
+} else if (process.platform.indexOf('win') === 0) {
+  browsers.push('Internet Explorer');
+}
+
 module.exports = function(config) {
   config.set({
 
@@ -71,7 +79,7 @@ module.exports = function(config) {
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
     // Chrome
     // PhantomJS
-    browsers: ['Chrome'],
+    browsers: browsers,
 
 
     // Continuous Integration mode

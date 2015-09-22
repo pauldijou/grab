@@ -10,7 +10,7 @@ npm install grab-http --save
 
 **Requirements**
 
-The Promise API. You can use any polyfill you want, just be sure it's present inside the window / global object. Browser support is now [pretty good](https://www.npmjs.com/package/) (except IE).
+The Promise API. You can use [any](https://github.com/jakearchibald/es6-promise) [polyfill](https://github.com/petkaantonov/bluebird) [you](https://github.com/kriskowal/q) want, just be sure it's present inside the window / global object. Browser support is now [pretty good](http://caniuse.com/#search=promise) (except IE).
 
 **Dependencies**
 - browser: none (only 400 LOC)
