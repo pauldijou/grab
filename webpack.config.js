@@ -6,8 +6,8 @@ module.exports = {
 
   output: {
     path: path.join(__dirname, 'dist'),
-    filename: 'seek.js',
-    library: 'seek',
+    filename: 'grab.js',
+    library: 'grab',
     libraryTarget: 'umd'
   },
 

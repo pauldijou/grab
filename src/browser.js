@@ -1,3 +1,3 @@
-import seekFactory from './seek';
+import grabFactory from './grab';
 
-export default seekFactory(window.XMLHttpRequest, window.FormData);
+export default grabFactory(window.XMLHttpRequest, window.FormData);

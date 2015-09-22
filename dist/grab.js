@@ -4,9 +4,9 @@
 	else if(typeof define === 'function' && define.amd)
 		define([], factory);
 	else if(typeof exports === 'object')
-		exports["seek"] = factory();
+		exports["grab"] = factory();
 	else
-		root["seek"] = factory();
+		root["grab"] = factory();
 })(this, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
@@ -62,11 +62,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-	var _seek = __webpack_require__(1);
+	var _grab = __webpack_require__(1);
 
-	var _seek2 = _interopRequireDefault(_seek);
+	var _grab2 = _interopRequireDefault(_grab);
 
-	exports['default'] = (0, _seek2['default'])(window.XMLHttpRequest, window.FormData);
+	exports['default'] = (0, _grab2['default'])(window.XMLHttpRequest, window.FormData);
 	module.exports = exports['default'];
 
 /***/ },
@@ -84,7 +84,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _get = function get(_x2, _x3, _x4) { var _again = true; _function: while (_again) { var object = _x2, property = _x3, receiver = _x4; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x2 = parent; _x3 = property; _x4 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
 
-	exports['default'] = seekFactory;
+	exports['default'] = grabFactory;
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
@@ -100,13 +100,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function noop() {}
 
-	function serializeQuery(params) {
-	  return Object.keys(params).reduce(function (query, param) {
-	    if (params.hasOwnProperty(param) && params[param] !== undef) {
-	      query.push(encodeURIComponent(param) + "=" + encodeURIComponent(params[param]));
+	function copy(value) {
+	  if (value !== null && typeof value === 'object') {
+	    var result = {};
+	    for (var key in value) {
+	      result[key] = copy(value[key]);
 	    }
-	    return query;
-	  }, []).join('&');
+	    return result;
+	  } else {
+	    return value;
+	  }
 	}
 
 	function hasQuery(url) {
@@ -114,7 +117,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	function fail(message) {
-	  throw new TypeError('Seek: ' + message);
+	  throw new TypeError('grab: ' + message);
 	}
 
 	function extractHeaders(xhr) {
@@ -250,7 +253,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return Response;
 	})();
 
-	function seekFactory(XMLHttpRequest, FormData, undef) {
+	function grabFactory(XMLHttpRequest, FormData, undef) {
 	  var defaults = {};
 
 	  function resetDefaults() {
@@ -266,9 +269,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	  function assignDefaults(options) {
 	    Object.keys(defaults).forEach(function (key) {
 	      if (options[key] === undef) {
-	        options[key] = defaults[key];
+	        options[key] = copy(defaults[key]);
 	      }
 	    });
+	  }
+
+	  function serializeQuery(params) {
+	    return Object.keys(params).reduce(function (query, param) {
+	      if (params.hasOwnProperty(param) && params[param] !== undef) {
+	        query.push(encodeURIComponent(param) + "=" + encodeURIComponent(params[param]));
+	      }
+	      return query;
+	    }, []).join('&');
 	  }
 
 	  // The main logic of the lib: sending a XMLHttpRequest
@@ -280,7 +292,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      xhr.onload = function () {
 	        try {
 	          var _status = xhr.status === 1223 ? 204 : xhr.status;
-	          seek.defaults.log({ ok: true, message: 'Seek: ' + options.method + ' ' + options.url + ' => ' + _status });
+	          grab.defaults.log({ ok: true, message: 'grab: ' + options.method + ' ' + options.url + ' => ' + _status });
 
 	          if (_status < 100 || _status > 599) {
 	            reject(new NetworkError());
@@ -293,12 +305,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	      };
 
 	      xhr.onerror = function () {
-	        seek.defaults.log({ ok: false, message: 'Seek: ' + options.method + ' ' + options.url + ' => XHR error' });
+	        grab.defaults.log({ ok: false, message: 'grab: ' + options.method + ' ' + options.url + ' => XHR error' });
 	        reject(new NetworkError());
 	      };
 
 	      xhr.onabort = function () {
-	        seek.defaults.log({ ok: false, message: 'Seek: ' + options.method + ' ' + options.url + ' => XHR ' + (canceled && 'canceled' || timedout && 'timeout' || 'aborted') });
+	        grab.defaults.log({ ok: false, message: 'grab: ' + options.method + ' ' + options.url + ' => XHR ' + (canceled && 'canceled' || timedout && 'timeout' || 'aborted') });
 	        if (canceled) {
 	          reject(new CancelError());
 	        } else if (timedout) {
@@ -319,7 +331,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        options.params = {};
 	      }
 
-	      var cacheParam = options.cache === undef ? seek.defaults.cache : options.cache;
+	      var cacheParam = options.cache === undef ? grab.defaults.cache : options.cache;
 
 	      if (cacheParam) {
 	        options.params[cacheParam === true ? '_' : cacheParam] = new Date().getTime();
@@ -332,11 +344,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	      // Open the XHR
 	      xhr.open(options.method, url, true);
 
-	      // Init headers
 	      if (options.responseType) {
 	        xhr.responseType = options.responseType;
 	      }
 
+	      // Init headers
 	      if (options.headers === undef) {
 	        options.headers = {};
 	      }
@@ -350,17 +362,20 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      // Body
 	      if (options.body !== null && typeof options.body === 'object' && (!FormData || !(options.body instanceof FormData))) {
-	        if (!(CONTENT_TYPE in options.headers)) {
-	          options.headers[CONTENT_TYPE] = 'application/json';
+	        if (options.urlEncoded) {
+	          if (!(CONTENT_TYPE in options.headers)) {
+	            options.headers[CONTENT_TYPE] = 'application/x-www-form-urlencoded';
+	          }
+	          options.body = serializeQuery(options.body);
+	        } else {
+	          if (!(CONTENT_TYPE in options.headers)) {
+	            options.headers[CONTENT_TYPE] = 'application/json';
+	          }
+	          options.body = JSON.stringify(options.body);
 	        }
-	        options.body = JSON.stringify(options.body);
 	      }
 
 	      // Set headers
-	      Object.keys(seek.defaults.headers).forEach(function (header) {
-	        xhr.setRequestHeader(header, seek.defaults.headers[header]);
-	      });
-
 	      Object.keys(options.headers).forEach(function (header) {
 	        xhr.setRequestHeader(header, options.headers[header]);
 	      });
@@ -408,7 +423,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return request;
 	  }
 
-	  function seek(input) {
+	  function grab(input) {
 	    var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 
 	    if (input === undef) {
@@ -421,7 +436,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    } else if (typeof input === 'object') {
 	      options = input;
 	    } else {
-	      fail('Seek: first argument "input" must be a string or an object but got ' + typeof input);
+	      fail('grab: first argument "input" must be a string or an object but got ' + typeof input);
 	    }
 
 	    if (!options.url) {
@@ -459,73 +474,73 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return options;
 	  }
 
-	  seek.get = function get(url, options) {
+	  grab.get = function get(url, options) {
 	    options = assignShortcut('GET', url, undef, options);
-	    return seek(options);
+	    return grab(options);
 	  };
 
 	  // Not a typo, 'delete' is a reserved word
-	  seek['delete'] = function delet(url, options) {
+	  grab['delete'] = function delet(url, options) {
 	    options = assignShortcut('DELETE', url, undef, options);
-	    return seek(options);
+	    return grab(options);
 	  };
 
-	  seek.options = function options(url, options) {
+	  grab.options = function options(url, options) {
 	    options = assignShortcut('OPTIONS', url, undef, options);
-	    return seek(options);
+	    return grab(options);
 	  };
 
-	  seek.head = function head(url, options) {
+	  grab.head = function head(url, options) {
 	    options = assignShortcut('HEAD', url, undef, options);
-	    return seek(options);
+	    return grab(options);
 	  };
 
-	  seek.trace = function trace(url, options) {
+	  grab.trace = function trace(url, options) {
 	    options = assignShortcut('TRACE', url, undef, options);
-	    return seek(options);
+	    return grab(options);
 	  };
 
-	  seek.connect = function connect(url, options) {
+	  grab.connect = function connect(url, options) {
 	    options = assignShortcut('CONNECT', url, undef, options);
-	    return seek(options);
+	    return grab(options);
 	  };
 
-	  seek.post = function post(url, body, options) {
+	  grab.post = function post(url, body, options) {
 	    options = assignShortcut('POST', url, body, options);
-	    return seek(options);
+	    return grab(options);
 	  };
 
-	  seek.put = function put(url, body, options) {
+	  grab.put = function put(url, body, options) {
 	    options = assignShortcut('PUT', url, body, options);
-	    return seek(options);
+	    return grab(options);
 	  };
 
-	  seek.patch = function patch(url, body, options) {
+	  grab.patch = function patch(url, body, options) {
 	    options = assignShortcut('PATCH', url, body, options);
-	    return seek(options);
+	    return grab(options);
 	  };
 
 	  // Util methods
-	  seek.serialize = serializeQuery;
+	  grab.serialize = serializeQuery;
 
 	  // Types
-	  seek.Response = Response;
+	  grab.Response = Response;
 
-	  seek.NetworkError = NetworkError;
-	  seek.AbortError = AbortError;
-	  seek.TimeoutError = TimeoutError;
-	  seek.CancelError = CancelError;
+	  grab.NetworkError = NetworkError;
+	  grab.AbortError = AbortError;
+	  grab.TimeoutError = TimeoutError;
+	  grab.CancelError = CancelError;
 
-	  seek.errors = errors;
+	  grab.errors = errors;
 
 	  // Expose defaults
-	  seek.defaults = defaults;
+	  grab.defaults = defaults;
 
-	  seek.resetDefaults = resetDefaults;
+	  grab.resetDefaults = resetDefaults;
 
 	  resetDefaults();
 
-	  return seek;
+	  return grab;
 	}
 
 	;

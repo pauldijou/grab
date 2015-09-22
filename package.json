@@ -1,20 +1,20 @@
 {
-  "name": "seek",
+  "name": "grab-http",
   "version": "0.1.0",
   "license": "Apache-2.0",
   "description": "A promisified XMLHttpRequest with an API close to fetch",
-  "keywords": ["seek", "fetch", "xmlhttprequest", "request", "network", "ajax", "promise"],
-  "homepage": "https://github.com/pauldijou/seek",
+  "keywords": ["grab", "fetch", "xmlhttprequest", "request", "network", "ajax", "promise"],
+  "homepage": "https://github.com/pauldijou/grab",
   "author": {
     "name": "Paul Dijou",
     "url": "http://pauldijou.fr"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/pauldijou/seek"
+    "url": "https://github.com/pauldijou/grab"
   },
   "bugs": {
-    "url": "https://github.com/pauldijou/seek/issues"
+    "url": "https://github.com/pauldijou/grab/issues"
   },
   "main": "lib/node.js",
   "browser": "lib/browser.js",
@@ -24,7 +24,8 @@
     "dist": "rimraf dist && webpack --config webpack.config.js --colors",
     "prepublish": "npm run clean && npm run build",
     "start": "npm run dist && node ./example/server.js",
-    "test": "karma start"
+    "test": "karma start",
+    "ci": "karma start karma-ci.conf.js"
   },
   "dependencies": {
     "xmlhttprequest": "^1.7.0",
@@ -45,7 +46,9 @@
     "karma-chrome-launcher": "^0.2.0",
     "karma-phantomjs-launcher": "^0.2.0",
     "karma-webpack": "^1.7.0",
+    "karma-sauce-launcher": "^0.2.14",
     "phantomjs": "1.9.17",
-    "node-libs-browser": ">= 0.4.0 <=0.6.0"
+    "node-libs-browser": ">= 0.4.0 <=0.6.0",
+    "es6-promise": "^3.0.2"
   }
 }

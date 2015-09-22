@@ -1,25 +1,25 @@
 // Test everything involving a body in the request
-import seek from '../src/browser.js';
+import grab from '../src/browser.js';
 
-seek.defaults.base = 'http://localhost:3000';
+grab.defaults.base = 'http://localhost:3000';
 
 describe('body >', ()=> {
   it('should post raw data', (done)=> {
-    seek('/body', { method: 'POST', body: 'azerty' }).then((response)=> {
+    grab('/body', { method: 'POST', body: 'azerty' }).then((response)=> {
       expect(response.body).toEqual('azerty');
       done();
     });
   });
 
   it('should post JSON data', (done)=> {
-    seek('/body', { method: 'POST', body: {test: 1} }).then((response)=> {
+    grab('/body', { method: 'POST', body: {test: 1} }).then((response)=> {
       expect(response.json()).toEqual({test: 1});
       done();
     });
   });
 
   it('should post form url encoded data', (done)=> {
-    seek('/body', { method: 'POST', body: {test: '1', and: 'more'}, urlEncoded: true }).then((response)=> {
+    grab('/body', { method: 'POST', body: {test: '1', and: 'more'}, urlEncoded: true }).then((response)=> {
       expect(response.json()).toEqual({test: '1', and: 'more'});
       done();
     });
@@ -29,7 +29,7 @@ describe('body >', ()=> {
     const body = new FormData();
     body.append('name', 'Paul');
 
-    seek('/users', { method: 'POST', body }).then(response=> {
+    grab('/users', { method: 'POST', body }).then(response=> {
       const user = response.json();
       expect(response.ok).toBe(true);
       expect(response.status).toBe(201);

@@ -26,7 +26,7 @@ function hasQuery(url) {
 }
 
 function fail(message) {
-  throw new TypeError('Seek: ' + message);
+  throw new TypeError('grab: ' + message);
 }
 
 function extractHeaders(xhr) {
@@ -127,7 +127,7 @@ class Response {
 }
 
 // The real deal
-export default function seekFactory(XMLHttpRequest, FormData, undef) {
+export default function grabFactory(XMLHttpRequest, FormData, undef) {
   const defaults = {};
 
   function resetDefaults() {
@@ -166,7 +166,7 @@ export default function seekFactory(XMLHttpRequest, FormData, undef) {
       xhr.onload = function () {
         try {
           const status = (xhr.status === 1223) ? 204 : xhr.status;
-          seek.defaults.log({ok: true, message: `Seek: ${options.method} ${options.url} => ${status}`});
+          grab.defaults.log({ok: true, message: `grab: ${options.method} ${options.url} => ${status}`});
 
           if (status < 100 || status > 599) {
             reject(new NetworkError());
@@ -179,12 +179,12 @@ export default function seekFactory(XMLHttpRequest, FormData, undef) {
       };
 
       xhr.onerror = function () {
-        seek.defaults.log({ok: false, message: `Seek: ${options.method} ${options.url} => XHR error`});
+        grab.defaults.log({ok: false, message: `grab: ${options.method} ${options.url} => XHR error`});
         reject(new NetworkError());
       };
 
       xhr.onabort = function () {
-        seek.defaults.log({ok: false, message: `Seek: ${options.method} ${options.url} => XHR ${(canceled && 'canceled') || (timedout && 'timeout') || 'aborted'}`});
+        grab.defaults.log({ok: false, message: `grab: ${options.method} ${options.url} => XHR ${(canceled && 'canceled') || (timedout && 'timeout') || 'aborted'}`});
         if (canceled) {
           reject(new CancelError());
         } else if (timedout) {
@@ -205,7 +205,7 @@ export default function seekFactory(XMLHttpRequest, FormData, undef) {
         options.params = {};
       }
 
-      const cacheParam = options.cache === undef ? seek.defaults.cache : options.cache;
+      const cacheParam = options.cache === undef ? grab.defaults.cache : options.cache;
 
       if (cacheParam) {
         options.params[cacheParam === true ? '_' : cacheParam] = (new Date()).getTime();
@@ -305,7 +305,7 @@ export default function seekFactory(XMLHttpRequest, FormData, undef) {
     return request;
   }
 
-  function seek(input, options = {}) {
+  function grab(input, options = {}) {
     if (input === undef) {
       fail('come on... there is no way do make a request without any arguments...');
     }
@@ -316,7 +316,7 @@ export default function seekFactory(XMLHttpRequest, FormData, undef) {
     } else if (typeof input === 'object') {
       options = input;
     } else {
-      fail('Seek: first argument "input" must be a string or an object but got ' + (typeof input));
+      fail('grab: first argument "input" must be a string or an object but got ' + (typeof input));
     }
 
     if (!options.url) {
@@ -354,71 +354,71 @@ export default function seekFactory(XMLHttpRequest, FormData, undef) {
     return options;
   }
 
-  seek.get = function get(url, options) {
+  grab.get = function get(url, options) {
     options = assignShortcut('GET', url, undef, options);
-    return seek(options);
+    return grab(options);
   };
 
   // Not a typo, 'delete' is a reserved word
-  seek['delete'] = function delet(url, options) {
+  grab['delete'] = function delet(url, options) {
     options = assignShortcut('DELETE', url, undef, options);
-    return seek(options);
+    return grab(options);
   };
 
-  seek.options = function options(url, options) {
+  grab.options = function options(url, options) {
     options = assignShortcut('OPTIONS', url, undef, options);
-    return seek(options);
+    return grab(options);
   };
 
-  seek.head = function head(url, options) {
+  grab.head = function head(url, options) {
     options = assignShortcut('HEAD', url, undef, options);
-    return seek(options);
+    return grab(options);
   };
 
-  seek.trace = function trace(url, options) {
+  grab.trace = function trace(url, options) {
     options = assignShortcut('TRACE', url, undef, options);
-    return seek(options);
+    return grab(options);
   };
 
-  seek.connect = function connect(url, options) {
+  grab.connect = function connect(url, options) {
     options = assignShortcut('CONNECT', url, undef, options);
-    return seek(options);
+    return grab(options);
   };
 
-  seek.post = function post(url, body, options) {
+  grab.post = function post(url, body, options) {
     options = assignShortcut('POST', url, body, options);
-    return seek(options);
+    return grab(options);
   };
 
-  seek.put = function put(url, body, options) {
+  grab.put = function put(url, body, options) {
     options = assignShortcut('PUT', url, body, options);
-    return seek(options);
+    return grab(options);
   };
 
-  seek.patch = function patch(url, body, options) {
+  grab.patch = function patch(url, body, options) {
     options = assignShortcut('PATCH', url, body, options);
-    return seek(options);
+    return grab(options);
   };
 
   // Util methods
-  seek.serialize = serializeQuery;
+  grab.serialize = serializeQuery;
 
   // Types
-  seek.Response = Response;
+  grab.Response = Response;
 
-  seek.NetworkError = NetworkError;
-  seek.AbortError = AbortError;
-  seek.TimeoutError = TimeoutError;
-  seek.CancelError = CancelError;
+  grab.NetworkError = NetworkError;
+  grab.AbortError = AbortError;
+  grab.TimeoutError = TimeoutError;
+  grab.CancelError = CancelError;
 
-  seek.errors = errors;
+  grab.errors = errors;
 
   // Expose defaults
-  seek.defaults = defaults;
+  grab.defaults = defaults;
 
-  seek.resetDefaults = resetDefaults;
+  grab.resetDefaults = resetDefaults;
 
   resetDefaults();
 
-  return seek;
+  return grab;
 };

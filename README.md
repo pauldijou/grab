@@ -1,11 +1,11 @@
-# seek
+# grab
 
 A promisified XMLHttpRequest with an API close to fetch.
 
 ## Install
 
 ```bash
-npm install seek-js --save
+npm install grab-http --save
 ```
 
 **Requirements**
@@ -25,17 +25,17 @@ The Promise API. You can use any polyfill you want, just be sure it's present in
 ## Usage
 
 ```javascript
-import seek from 'seek-js';
+import grab from 'grab-js';
 
 // GET /api/users?limit=10
-seek('/api/users', { params: { limit: 10 }}).then(response => {
+grab('/api/users', { params: { limit: 10 }}).then(response => {
   console.log(response.json());
 }).catch(error => {
   console.error(error);
 });
 
 // POST /api/users
-seek({method: 'POST', url: '/api/users', body: { name: 'Paul' }})
+grab({method: 'POST', url: '/api/users', body: { name: 'Paul' }})
   .then(response => console.log('User created'))
   .catch(error => console.error(error));
 ```
@@ -48,13 +48,13 @@ seek({method: 'POST', url: '/api/users', body: { name: 'Paul' }})
 
 ## API
 
-### seek(input, options)
+### grab(input, options)
 
 #### Parameters
 
 - **input**: either a string matching a valid url or an object used as the options parameter.
 - **options**: object containing the request configuration
-  - **url** (required if no  string input): a string containing the direct URL of the resource you want to seek.
+  - **url** (required if no  string input): a string containing the direct URL of the resource you want to grab.
   - **method** (default: 'GET'): the request method, e.g., GET, POST.
   - **body** (any): the body of the request. If JavaScript object, will be stringified and `Content-Type: application/json` header will be added
   - **params** (object): a map of key/value which will be added to the query string
@@ -89,7 +89,7 @@ A promise that will eventually be resolved with a [Response](#response) object. 
 
 ### Defaults
 
-You can override or add any default parameter using `seek.defaults`.
+You can override or add any default parameter using `grab.defaults`.
 
 - **method** (string): `GET`
 - **log** (function): empty. See [logging section](#logging).
@@ -101,29 +101,29 @@ You can override or add any default parameter using `seek.defaults`.
 
 ```javascript
 // Set a timeout to all requests
-seek.defaults.timeout = 60000;
+grab.defaults.timeout = 60000;
 
 // Add a custom header to all requests
-seek.defaults.headers['X-Custom-Header'] = 'CustomValue';
+grab.defaults.headers['X-Custom-Header'] = 'CustomValue';
 ```
 
-Any parameter inside **options** when calling `seek` will override the defaults. For example, you can put a timeout for all your requests by default but disable it for a particular long request by setting `timeout: 0` inside the options. Objects will also be overridden and not merged. Feel free to add any other default you need, they will be copied inside the options if possible. For example, you can do `seek.defaults.urlEncoded = true;` to make all your requests form url encoded by default.
+Any parameter inside **options** when calling `grab` will override the defaults. For example, you can put a timeout for all your requests by default but disable it for a particular long request by setting `timeout: 0` inside the options. Objects will also be overridden and not merged. Feel free to add any other default you need, they will be copied inside the options if possible. For example, you can do `grab.defaults.urlEncoded = true;` to make all your requests form url encoded by default.
 
 ### Shortcuts
 
-There is a shortcut for every HTTP methods, the syntax is `seek.[METHOD](url, [body], options)`. `POST`, `PUT` and `PATCH` supports a body parameter, all others don't.
+There is a shortcut for every HTTP methods, the syntax is `grab.[METHOD](url, [body], options)`. `POST`, `PUT` and `PATCH` supports a body parameter, all others don't.
 
 ```javascript
-seek.get('/users');
-seek.post('/users', { id: 1, name: 'Paul', admin: true });
-seek.put('/users/1', { name: 'Alex', admin: false });
-seek.patch('/users/1', { admin: true })
-seek.delete('/users/1');
+grab.get('/users');
+grab.post('/users', { id: 1, name: 'Paul', admin: true });
+grab.put('/users/1', { name: 'Alex', admin: false });
+grab.patch('/users/1', { admin: true })
+grab.delete('/users/1');
 ```
 
 ### Methods
 
-#### seek.serialize
+#### grab.serialize
 
 **Parameters**
 
@@ -134,11 +134,11 @@ A JavaScript object of key / value parameters.
 A valid url query string.
 
 ```javascript
-seek.serialize({page: 2, limit: 20});
+grab.serialize({page: 2, limit: 20});
 // returns 'page=2&limit=20'
 ```
 
-#### seek.resetDefaults
+#### grab.resetDefaults
 
 **Parameters**
 
@@ -150,13 +150,13 @@ Reset all defaults to their initial value and return it.
 
 ### Logging
 
-You can enable logs by providing a `seek.defaults.log` function. It takes only one parameter which has the following attributes:
+You can enable logs by providing a `grab.defaults.log` function. It takes only one parameter which has the following attributes:
 
 - **ok** (boolean): `true` if it's just an info, `false` if something went wrong.
 - **message** (string): what just happened.
 
 ```javascript
-seek.defaults.log = function (out) {
+grab.defaults.log = function (out) {
   if (out.ok) {
     console.log(out.message);
   } else {
@@ -176,10 +176,10 @@ Depending on your parameters or the network response, the following errors can b
 - **AbortError**: the XMLHttpRequest has been aborted but we don't really know why. Both `TimeoutError` and `CancelError` extend this error.
 
 ```javascript
-import seek from 'seek-js';
-import { TimeoutError, CancelError } from 'seek-js';
+import grab from 'grab-js';
+import { TimeoutError, CancelError } from 'grab-js';
 
-seek('/api/users', { timeout: 10 })
+grab('/api/users', { timeout: 10 })
   .then(response=> {
     console.log('All users', response.json());
   })
@@ -194,19 +194,19 @@ seek('/api/users', { timeout: 10 })
   });
 ```
 
-You can also use error codes from `seek.errors`, you have `network`, `timeout`, `cancel` and `abort`.
+You can also use error codes from `grab.errors`, you have `network`, `timeout`, `cancel` and `abort`.
 
 ```javascript
-import seek from 'seek-js';
+import grab from 'grab-js';
 
-seek('/api/users', { timeout: 10 })
+grab('/api/users', { timeout: 10 })
   .then(response=> {
     console.log('All users', response.json());
   })
   .catch(error=> {
-    if (error.code === seek.errors.timeout) {
+    if (error.code === grab.errors.timeout) {
       console.warn('Couldn\'t make it in time...');
-    } else if (error.code === seek.errors.cancel) {
+    } else if (error.code === grab.errors.cancel) {
       console.warn('Who canceled the request?!');
     } else {
       console.error(error);
