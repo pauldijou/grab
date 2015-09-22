@@ -65,6 +65,8 @@ grab({method: 'POST', url: '/api/users', body: { name: 'Paul' }})
   - **responseType** (string): assigned to `xhr.responseType`
   - **onProgress** (function): a function called by the XMLHttpRequest with a [progress event](https://developer.mozilla.org/en-US/docs/Web/Events/progress).
   - **urlEncoded** (boolean): if true, body objects will be serialized as form url encoded and `Content-Type: application/x-www-form-urlencoded` will be added.
+  - **username** (string): optional user name to use for authentication purposes.
+  - **password** (string): optional password to use for authentication purposes.
 
 #### Returns
 

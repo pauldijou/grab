@@ -220,7 +220,7 @@ export default function grabFactory(XMLHttpRequest, FormData, undef) {
           '');
 
       // Open the XHR
-      xhr.open(options.method, url, true);
+      xhr.open(options.method, url, true, options.username, options.password);
 
       if (options.responseType) {
         xhr.responseType = options.responseType;

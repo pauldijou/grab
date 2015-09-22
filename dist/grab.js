@@ -342,7 +342,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var url = (options.base || '') + options.url + (serializedParams ? (hasQuery(options.url) ? '&' : '?') + serializedParams : '');
 
 	      // Open the XHR
-	      xhr.open(options.method, url, true);
+	      xhr.open(options.method, url, true, options.username, options.password);
 
 	      if (options.responseType) {
 	        xhr.responseType = options.responseType;
