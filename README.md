@@ -12,6 +12,8 @@ npm install grab-http --save
 
 The Promise API. You can use [any](https://github.com/jakearchibald/es6-promise) [polyfill](https://github.com/petkaantonov/bluebird) [you](https://github.com/kriskowal/q) want, just be sure it's present inside the window / global object. Browser support is now [pretty good](http://caniuse.com/#search=promise) (except IE).
 
+For very old browsers, consider including a [ES5 shim](https://github.com/es-shims/es5-shim) for methods like `Object.keys`.
+
 **Dependencies**
 - browser: none (only 400 LOC)
 - node: [xmlhttprequest](https://www.npmjs.com/package/xmlhttprequest) and [form-data](https://www.npmjs.com/package/form-data)
