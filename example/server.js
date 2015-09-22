@@ -82,11 +82,10 @@ app.all('/query', function (req, res) {
 
 app.all('/pending', function (req, res) {
   console.log(req.method, '/pending', req.query.timeout || 2000, 'ms');
-  var timeout = 2000;
-  try {
-    timeout = parseInt(req.query.timeout, 10);
-  } catch (e) {}
-
+  var timeout = parseInt(req.query.timeout, 10);
+  if (isNaN(timeout)) {
+    timeout = 2000;
+  }
   setTimeout(function () {
     res.status(200).end();
   }, timeout);
