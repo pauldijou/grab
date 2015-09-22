@@ -13,11 +13,12 @@ var parseJSON = bodyParser.json();
 var parseUrlencoded = bodyParser.urlencoded({ extended: true });
 
 app.use(function(req, res, next){
-  if ((req.header('Content-Type') || req.header('content-type')) === 'application/json') {
+  var contentType = req.header('Content-Type') || req.header('content-type') || '';
+  if (contentType.indexOf('application/json') >= 0) {
     parseJSON(req, res, next);
-  } else if ((req.header('Content-Type') || req.header('content-type')) === 'application/x-www-form-urlencoded') {
+  } else if (contentType.indexOf('application/x-www-form-urlencoded') >= 0) {
     parseUrlencoded(req, res, next);
-  } else if ((req.header('Content-Type') || req.header('content-type') || '').indexOf('multipart/form-data') >= 0) {
+  } else if (contentType.indexOf('multipart/form-data') >= 0) {
     multer.array()(req, res, next);
   } else {
     req.body = '';
