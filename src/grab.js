@@ -138,6 +138,7 @@ export default function grabFactory(XMLHttpRequest, FormData, undef) {
     defaults.method = 'GET';
     defaults.base = '';
     defaults.credentials = false;
+    defaults.FormData = FormData;
   }
 
   function assignDefaults(options) {
@@ -171,7 +172,7 @@ export default function grabFactory(XMLHttpRequest, FormData, undef) {
           if (status < 100 || status > 599) {
             reject(new NetworkError());
           } else {
-            resolve(new Response(xhr, status, FormData));
+            resolve(new Response(xhr, status, options.FormData));
           }
         } catch (e) {
           reject(e); // IE could throw an error
@@ -242,7 +243,7 @@ export default function grabFactory(XMLHttpRequest, FormData, undef) {
       if (
         options.body !== null &&
         typeof options.body === 'object' &&
-        (!FormData || !(options.body instanceof FormData))
+        (!options.FormData || !(options.body instanceof options.FormData))
       ) {
         if (options.urlEncoded) {
           if (!(CONTENT_TYPE in options.headers)) {
@@ -258,7 +259,7 @@ export default function grabFactory(XMLHttpRequest, FormData, undef) {
       }
 
       // Set headers
-      Object.keys(options.headers).forEach(header=> {
+      Object.keys(options.headers).forEach(header => {
         xhr.setRequestHeader(header, options.headers[header]);
       });
 
@@ -403,6 +404,8 @@ export default function grabFactory(XMLHttpRequest, FormData, undef) {
   // Util methods
   grab.serialize = serializeQuery;
 
+  grab.resetDefaults = resetDefaults;
+
   // Types
   grab.Response = Response;
 
@@ -415,8 +418,6 @@ export default function grabFactory(XMLHttpRequest, FormData, undef) {
 
   // Expose defaults
   grab.defaults = defaults;
-
-  grab.resetDefaults = resetDefaults;
 
   resetDefaults();
 

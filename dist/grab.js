@@ -250,6 +250,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    defaults.method = 'GET';
 	    defaults.base = '';
 	    defaults.credentials = false;
+	    defaults.FormData = FormData;
 	  }
 
 	  function assignDefaults(options) {
@@ -283,7 +284,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          if (_status < 100 || _status > 599) {
 	            reject(new NetworkError());
 	          } else {
-	            resolve(new Response(xhr, _status, FormData));
+	            resolve(new Response(xhr, _status, options.FormData));
 	          }
 	        } catch (e) {
 	          reject(e); // IE could throw an error
@@ -347,7 +348,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 
 	      // Body
-	      if (options.body !== null && typeof options.body === 'object' && (!FormData || !(options.body instanceof FormData))) {
+	      if (options.body !== null && typeof options.body === 'object' && (!options.FormData || !(options.body instanceof options.FormData))) {
 	        if (options.urlEncoded) {
 	          if (!(CONTENT_TYPE in options.headers)) {
 	            options.headers[CONTENT_TYPE] = 'application/x-www-form-urlencoded';
@@ -509,6 +510,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  // Util methods
 	  grab.serialize = serializeQuery;
 
+	  grab.resetDefaults = resetDefaults;
+
 	  // Types
 	  grab.Response = Response;
 
@@ -521,8 +524,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  // Expose defaults
 	  grab.defaults = defaults;
-
-	  grab.resetDefaults = resetDefaults;
 
 	  resetDefaults();
 

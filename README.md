@@ -15,8 +15,8 @@ The Promise API. You can use [any](https://github.com/jakearchibald/es6-promise)
 For very old browsers, consider including a [ES5 shim](https://github.com/es-shims/es5-shim) for methods like `Object.keys`.
 
 **Dependencies**
-- browser: none (only 400 LOC)
-- node: [xmlhttprequest](https://www.npmjs.com/package/xmlhttprequest) and [form-data](https://www.npmjs.com/package/form-data)
+- Browser: none (only 400 LOC)
+- Node: [xmlhttprequest](https://www.npmjs.com/package/xmlhttprequest) (check [defaults.FormData](#defaults) if you need to use `FormData` in Node)
 
 **Features**
 - support old browsers
@@ -102,6 +102,7 @@ You can override or add any default parameter using `grab.defaults`.
 - **cache** (boolean): `false` in most case except for some IE.
 - **base** (string): `''`
 - **credentials** (boolean): `false`
+- **FormData** (object): `window.FormData` in the browser and `undefined` in Node.You can assign [any implementation](https://www.npmjs.com/package/form-data) you want if you need to use `FormData` inside Node. You can also override the browser default if needed.
 
 ```javascript
 // Set a timeout to all requests
