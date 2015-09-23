@@ -127,7 +127,7 @@ class Response {
 }
 
 // The real deal
-export default function grabFactory(XMLHttpRequest, FormData, undef) {
+export default function grabFactory(global, XMLHttpRequest, FormData, undef) {
   const defaults = {};
 
   function resetDefaults() {
@@ -158,40 +158,55 @@ export default function grabFactory(XMLHttpRequest, FormData, undef) {
     }, []).join('&');
   }
 
+  function initXHR () {
+    if (XMLHttpRequest) {
+      return new XMLHttpRequest();
+    }
+
+    try { return new global.ActiveXObject('Msxml2.XMLHTTP.6.0'); }
+    catch (e) {}
+    try { return new global.ActiveXObject('Msxml2.XMLHTTP.3.0'); }
+    catch (e) {}
+    try { return new global.ActiveXObject('Microsoft.XMLHTTP'); }
+    catch (e) {}
+
+    throw new Error('I have no idea which browser you are using... but there is no such thing as XMLHttpRequest in it.');
+  }
+
   // The main logic of the lib: sending a XMLHttpRequest
   function send(options) {
     assignDefaults(options);
-    const xhr = new XMLHttpRequest();
+    const xhr = initXHR();
 
     const request = new Promise((resolve, reject)=> {
-      xhr.onload = function () {
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState !== 4) { return; }
+
         try {
           const status = (xhr.status === 1223) ? 204 : xhr.status;
-          grab.defaults.log({ok: true, message: `grab: ${options.method} ${options.url} => ${status}`});
 
-          if (status < 100 || status > 599) {
-            reject(new NetworkError());
+          if (!status) {
+            if (canceled) {
+              grab.defaults.log({ok: false, message: `grab: ${options.method} ${options.url} => XHR canceled`});
+              reject(new CancelError());
+            } else if (timedout) {
+              grab.defaults.log({ok: false, message: `grab: ${options.method} ${options.url} => XHR timed out after ${options.timeout}ms`});
+              reject(new TimeoutError(options.timeout));
+            } else {
+              grab.defaults.log({ok: false, message: `grab: ${options.method} ${options.url} => XHR error`});
+              reject(new NetworkError());
+            }
           } else {
-            resolve(new Response(xhr, status, options.FormData));
+            if (status < 100 || status > 599) {
+              grab.defaults.log({ok: false, message: `grab: ${options.method} ${options.url} => ${status}`});
+              reject(new NetworkError());
+            } else {
+              grab.defaults.log({ok: true, message: `grab: ${options.method} ${options.url} => error ${status}`});
+              resolve(new Response(xhr, status, options.FormData));
+            }
           }
         } catch (e) {
           reject(e); // IE could throw an error
-        }
-      };
-
-      xhr.onerror = function () {
-        grab.defaults.log({ok: false, message: `grab: ${options.method} ${options.url} => XHR error`});
-        reject(new NetworkError());
-      };
-
-      xhr.onabort = function () {
-        grab.defaults.log({ok: false, message: `grab: ${options.method} ${options.url} => XHR ${(canceled && 'canceled') || (timedout && 'timeout') || 'aborted'}`});
-        if (canceled) {
-          reject(new CancelError());
-        } else if (timedout) {
-          reject(new TimeoutError(options.timeout));
-        } else {
-          reject(new AbortError());
         }
       };
 

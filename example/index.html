@@ -4,11 +4,15 @@
     <style></style>
   </head>
   <body>
-    <button type="button" onclick="test.call('http://localhost:3000/status/200')">Call 200</button>
-    <button type="button" onclick="test.call('http://localhost:3000/status/404')">Call 404</button>
-    <button type="button" onclick="test.call('http://localhost:3000/users')">Call users</button>
+    <input type="text" id="base" value="http://localhost:3000"/>
+    <button type="button" onclick="test.call('/status/200')">Call 200</button>
+    <button type="button" onclick="test.call('/status/404')">Call 404</button>
+    <button type="button" onclick="test.call('/users')">Call users</button>
 
-    <script src="grab.js"></script>
-    <script src="client.js"></script>
+    <script type="text/javascript" src="es5-shim/es5-shim.js"></script>
+    <script type="text/javascript" src="es5-shim/es5-sham.js"></script>
+    <script type="text/javascript" src="es6-promise/dist/es6-promise.js"></script>
+    <script type="text/javascript" src="grab.js"></script>
+    <script type="text/javascript" src="client.js"></script>
   </body>
 </html>

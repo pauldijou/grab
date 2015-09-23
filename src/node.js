@@ -1,4 +1,4 @@
 import grabFactory from './grab';
 import { XMLHttpRequest } from 'xmlhttprequest';
 
-export default grabFactory(XMLHttpRequest);
+export default grabFactory(global, XMLHttpRequest);
