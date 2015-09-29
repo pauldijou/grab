@@ -37,14 +37,20 @@ describe('errors >', ()=> {
 
   describe('network error >', ()=> {
     it('should reject on status 1', (done)=> {
-      grab('/status/1').catch((error)=> {
+      grab('/status/1').then(response => {
+        fail("Got response");
+        done();
+      }, error => {
         testNetwork(error);
         done();
       });
     });
 
     it('should reject on status 4242', (done)=> {
-      grab('/status/4242').catch((error)=> {
+      grab('/status/4242').then(response => {
+        fail("Got response");
+        done();
+      }, error => {
         testNetwork(error);
         done();
       });
@@ -53,7 +59,10 @@ describe('errors >', ()=> {
 
   describe('timeout error >', ()=> {
     it('should timeout', (done)=> {
-      grab('/pending', { timeout: 1 }).catch((error)=> {
+      grab('/pending', { timeout: 1 }).then(response => {
+        fail("Got response");
+        done();
+      }, error => {
         testTimeout(error);
         done();
       });
@@ -64,7 +73,10 @@ describe('errors >', ()=> {
     it('should reject when canceled', (done)=> {
       const request = grab('/pending');
 
-      request.catch((error)=> {
+      request.then(response => {
+        fail(response);
+        done();
+      }, error => {
         testCancel(error);
         done();
       });
@@ -73,7 +85,10 @@ describe('errors >', ()=> {
     });
 
     it('should auto cancel is cancel promise is already resolved', (done)=> {
-      grab('/pending', { cancel: Promise.resolve() }).catch((error)=> {
+      grab('/pending', { cancel: Promise.resolve() }).then(response => {
+        fail("Got response");
+        done();
+      }, error => {
         testCancel(error);
         done();
       });
@@ -86,7 +101,10 @@ describe('errors >', ()=> {
         }, 1);
       });
 
-      grab('/pending', { cancel }).catch((error)=> {
+      grab('/pending', { cancel }).then(response => {
+        fail("Got response");
+        done();
+      }, error => {
         testCancel(error);
         done();
       });

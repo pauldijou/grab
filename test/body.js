@@ -15,6 +15,9 @@ describe('body >', ()=> {
     grab('/body', { method: 'POST', body: {test: 1} }).then((response)=> {
       expect(response.json()).toEqual({test: 1});
       done();
+    }, error => {
+      fail(error);
+      done();
     });
   });
 
