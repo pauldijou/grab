@@ -143,10 +143,16 @@ export default function grabFactory(global, XMLHttpRequest, FormData, undef) {
 
   function assignDefaults(options) {
     Object.keys(defaults).forEach(key=> {
-      if (options[key] === undef) {
+      if (options[key] === undef && key !== 'FormData') {
         options[key] = copy(defaults[key]);
       }
     });
+
+    // We need to treat FormData differently since we
+    // don't want to clone the object but keep the constructor as it is
+    if (options.FormData === undef) {
+      options.FormData = defaults.FormData;
+    }
   }
 
   function serializeQuery(params) {
@@ -381,9 +387,11 @@ export default function grabFactory(global, XMLHttpRequest, FormData, undef) {
     return grab(options);
   };
 
-  grab.options = function options(url, options) {
-    options = assignShortcut('OPTIONS', url, undef, options);
-    return grab(options);
+  // Not a typo either, Safari didn't like having a parameter named 'options'
+  // as it shadows the name of a strict mode function.
+  grab.options = function options(url, opts) {
+    opts = assignShortcut('OPTIONS', url, undef, opts);
+    return grab(opts);
   };
 
   grab.head = function head(url, options) {
